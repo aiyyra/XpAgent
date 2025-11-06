@@ -27,7 +27,7 @@ from app.models.thread import Thread
 class DatabaseService():
     def __init__(self):
         self.engine = create_engine(settings.DB_URI, echo=True) # type: ignore
-        # Create all tables if not created
+        # Create all tables if not created, can comment after done initialize
         SQLModel.metadata.create_all(self.engine)
 
     def new_thread(self, ) -> Thread:
@@ -37,6 +37,11 @@ class DatabaseService():
             session.commit()
             session.refresh(thread)
             return thread
+
+    def get_all_thread(self) -> list[Thread]:
+        with Session(self.engine) as session:
+            threads = session.query(Thread).all()
+            return threads
 
 
 database_service = DatabaseService()
