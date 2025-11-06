@@ -1,0 +1,80 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pdb
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+pip-wheel-metadata/
+*.manifest
+*.spec
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+.env.bak/
+env.bak/
+
+# Environment variables
+.env
+.env.*
+!.env.example  # Keep an example env file (optional)
+
+# IDEs and editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*.swn
+*.bak
+*.tmp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+*.pid
+
+# Testing
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+nosetests.xml
+coverage.xml
+
+# Mypy / Pyright / Pylint
+.mypy_cache/
+.pyre/
+.pytype/
+.pylint.d/
+
+# FastAPI specific (optional)
+# Static or temp uploads
+staticfiles/
+uploads/
+media/
+tmp/
+
+# Docker
+*.pid
+*.seed
+*.bak
+*.old
+docker-compose.override.yml
+__docker_cache__/
+.dockerignore
+
+# Cache
+.cache/
+*.cache
+*.sqlite3
