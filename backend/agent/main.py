@@ -12,14 +12,13 @@ if ROOT not in sys.path:
 from dotenv import load_dotenv
 load_dotenv()
 
-
 from langchain_core.messages import HumanMessage
-from agent.graph.main_graph import graph
+from agent.graph.db_master_graph import db_master
 
 
 # test current graph
-# messages = [HumanMessage(content="Add 3 and 4. Multiply the output by 2. Divide the output by 5")]
-# messages = graph.invoke({"messages": messages}) # type: ignore
+messages = [HumanMessage(content="list 3 actors and movies")]
+messages = db_master.invoke({"messages": messages}) # type: ignore
 
 # config = {"configurable": {"thread_id": "1", "user_id": "1"}}
 
@@ -31,9 +30,9 @@ config = {
     }
 }
 
-state = graph.get_state(config) # type: ignore
+# state = db_master.get_state(config) # type: ignore
 
-print(state)
+# print(state)
 # for m in messages['messages']:
 #     m.pretty_print()
 

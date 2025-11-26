@@ -1,6 +1,6 @@
 import os
 from uuid import uuid4
-from sqlmodel import Field, SQLModel, create_engine, Session
+from sqlmodel import Field, SQLModel, create_engine, Session, select
 
 from app.core.config import settings
 from app.models.thread import Thread
@@ -40,8 +40,10 @@ class DatabaseService():
 
     def get_all_thread(self) -> list[Thread]:
         with Session(self.engine) as session:
-            threads = session.query(Thread).all()
-            return threads
+            # threads = session.query(Thread).all()
+            statement = select(Thread)
+            threads = session.exec(statement).all()
+            return threads # type: ignore
 
 
 database_service = DatabaseService()
