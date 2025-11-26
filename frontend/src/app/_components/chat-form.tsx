@@ -26,7 +26,8 @@ export function ChatForm({
         onSubmit={(e) => {
           if (!e.currentTarget.query.value.trim()) return;
           e.preventDefault();
-          submitHandler(e.currentTarget.query.value);
+          submitHandler(e.currentTarget.query.value.trim());
+          e.currentTarget.query.value = "";
         }}
         className="w-full"
       >
@@ -35,14 +36,16 @@ export function ChatForm({
             placeholder="Ask, Search or Chat..."
             name="query"
             onKeyDown={(e) => {
-              if (!e.currentTarget.value.trim()) return;
-              if (e.key === "Enter" && e.shiftKey) {
+              const query = e.currentTarget.value.trim();
+              if (!query) return;
+              // else if (e.key === "Enter" && e.shiftKey) {
+              //   e.preventDefault();
+              //   // find a way to go to next line (simply append \n to the value???)
+              //   return;
+              // }
+              else if (e.key === "Enter") {
                 e.preventDefault();
-                // find a way to go to next line (simply append \n to the value???)
-                return;
-              } else if (e.key === "Enter") {
-                e.preventDefault();
-                submitHandler(e.currentTarget.value);
+                submitHandler(query);
                 e.currentTarget.value = "";
               }
             }}

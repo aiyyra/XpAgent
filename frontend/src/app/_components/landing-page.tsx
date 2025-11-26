@@ -18,6 +18,8 @@ export default function LandingPage() {
       const thread_id = await create_new_thread_id();
       if (!thread_id) throw new Error("Failed to create thread");
 
+      // Update sidebar to include the new id, consider creating new file in lib
+
       // query agent
       await query_agent(thread_id, query);
 

@@ -8,6 +8,11 @@ export async function GET() {
 }
 
 // Get thread list
+export async function get_thread_list() {
+  const data = await fetch('http://localhost:8000/api/v1/allThread');
+  const result = await data.json();
+  return result;
+}
 
 // Create a new thread with post to thread
 export async function create_new_thread_id() {
