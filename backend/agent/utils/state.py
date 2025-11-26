@@ -1,3 +1,4 @@
+from typing import Optional
 from langgraph.graph import MessagesState
 from pydantic import BaseModel
 
@@ -10,11 +11,17 @@ class ExtendedMessagesState(MessagesState):
 class TestState(MessagesState):
     points: int
 
-
-class State(BaseModel):
+class TasksPlanning(BaseModel):
+    goal: str
+    tasks: str
+    
+class State(MessagesState):
     # messages: MessagesState
     # points: int
-    messages_state: MessagesState
+    tasks_planning: Optional[TasksPlanning]
 
 class InputState(BaseModel):
     messages: MessagesState
+
+class DBInteractionState(MessagesState):
+    query: str

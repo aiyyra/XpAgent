@@ -8,13 +8,40 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.store.postgres import PostgresStore
 
-from agent.graph.main_graph import overall_workflow
+from langgraph.graph import StateGraph, START, END
+
+from agent.graph.db_master_graph import builder as db_master
+from agent.utils.nodes import assistant, goal_formation, task_lister
+# from agent.utils.state import TestState as State
+from agent.utils.state import State
 
 class GraphService:
     def __init__(self):
         self.db_uri = str(os.getenv("DB_URI"))
         self.store = PostgresStore.from_conn_string(self.db_uri)
         self.checkpointer = PostgresSaver.from_conn_string(self.db_uri)
+
+
+    def main_builder(self, checkpointer: PostgresSaver, store: PostgresStore):
+        m_builder = (
+            StateGraph(State)
+            .add_node("goal_formation", goal_formation)
+            .add_node("task_lister", task_lister)
+            # .add_node("assistant", assistant)
+            
+            # .add_conditional_edges("db_master", db_master.compile(checkpointer=checkpointer, store=store))
+            # .add_node("db_master", db_master.compile(checkpointer=checkpointer, store=store))
+
+            .add_edge(START, "goal_formation")
+            .add_edge("goal_formation", "task_lister")
+            # .add_edge("task_lister", "assistant")
+            # .add_edge("assistant", "db_master")
+            # .add_edge("db_master", "assistant")
+            # .add_edge("assistant", END)
+
+        )
+
+        return m_builder.compile(checkpointer=checkpointer, store=store)
 
 
     
@@ -28,8 +55,11 @@ class GraphService:
                     "thread_id": thread_id,
                 }
             }
+
+            # checkpointer.setup()
+            # store.setup()
             
-            graph = overall_workflow.compile(checkpointer=checkpointer, store=store)
+            graph = self.main_builder(checkpointer=checkpointer, store=store)
             
             # Invoking the graph here
             reply = graph.invoke(
@@ -53,7 +83,7 @@ class GraphService:
                     "thread_id": thread_id,
                 }
             }
-            graph = overall_workflow.compile(checkpointer=checkpointer, store=store)
+            graph = self.main_builder(checkpointer=checkpointer, store=store)
             states = graph.get_state(config=config) # type: ignore
             # past_messages = states.values["messages"]
             return states

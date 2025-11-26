@@ -18,42 +18,26 @@ import { MessageSquare, MessageSquarePlus } from "lucide-react";
 // import { NewChatButton } from "./new-chat-button";
 import { useRouter } from "next/navigation";
 
+import { get_thread_list } from "../chat/route";
+
 interface SideBarProps {
-  // threads: Thread[];
+  // threads:
   // activeThreadId: string | null;
   // onThreadSelect: (threadId: string) => void;
   // onNewChat: () => void;
 }
 
-// mock Thread
-const threads = [
-  {
-    id: "bfa242be-aa77-49a5-88fa-ddb9228318fc",
-    title: "Chat on memancing",
-    lastMessage: "Hello, how are you?",
-    timestamp: "10:00 AM",
-  },
-  {
-    id: "2",
-    title: "Random 2",
-    lastMessage: "Hello, how are you?",
-    timestamp: "10:00 AM",
-  },
-  {
-    id: "3",
-    title: "Random 3",
-    lastMessage: "Hello, how are you?",
-    timestamp: "10:00 AM",
-  },
-  {
-    id: "4",
-    title: "Random 4",
-    lastMessage: "Hello, how are you?",
-    timestamp: "10:00 AM",
-  },
-];
+interface Thread {
+  topic: string;
+  id: string;
+  created_at: string;
+  expires_at: string;
+}
 
-export function AppSidebar({}: // threads,
+// Currently we make a very static approach that load the sidebar and require reload
+const threads: Thread[] = await get_thread_list();
+
+export function AppSidebar({}: // threads: Thread[],
 // activeThreadId,
 // onThreadSelect,
 SideBarProps) {
@@ -63,11 +47,12 @@ SideBarProps) {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-border p-4 ">
         <SidebarTrigger />
+        {/* add other part of sidebar header later */}
       </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
+          <SidebarGroupLabel>General</SidebarGroupLabel>
           <SidebarGroupContent>
-            {/* <NewChatButton onClick={onNewChat} /> */}
             <Button
               onClick={() => router.push("/")}
               className="w-full justify-start gap-2 bg-transparent text-primary hover:bg-sidebar-accent"
@@ -94,18 +79,9 @@ SideBarProps) {
                       <div className="flex w-full items-center gap-2">
                         <MessageSquare className="h-4 w-4 shrink-0" />
                         <span className="flex-1 truncate font-medium">
-                          {thread.title}
+                          {thread.topic == "" ? thread.id : thread.topic}
                         </span>
                       </div>
-                      {/* <div className="flex w-full items-center justify-between gap-2 pl-6">
-                        <span className="text-muted-foreground truncate text-xs">
-                          {thread.lastMessage}
-                        </span>
-                        <span className="text-muted-foreground shrink-0 text-xs">
-                          {formatTimestamp(thread.timestamp)}
-                          {thread.timestamp}
-                        </span>
-                      </div> */}
                     </div>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

@@ -26,19 +26,18 @@ export const metadata: Metadata = {
   description: "Exploration Agent by Afiq",
 };
 
+interface Thread {
+  topic: string;
+  id: string;
+  created_at: string;
+  expires_at: string;
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // this implementation is temporary only
-  const onNewChat = () => {
-    // use api to create new thread
-    const threadID = create_new_thread_id();
-    // log the new thread
-    console.log(threadID);
-  };
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body
@@ -53,11 +52,6 @@ export default function RootLayout({
           <SidebarProvider>
             <AppSidebar />
             <SidebarInset>{children}</SidebarInset>
-            {/* {children} */}
-            {/* <div className="h-screen w-screen">
-              <AppSidebar />
-              <main className="border border-red-500">{children}</main>
-            </div> */}
           </SidebarProvider>
         </ThemeProvider>
       </body>

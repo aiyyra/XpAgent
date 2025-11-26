@@ -1,5 +1,6 @@
 """ API v1 configuration. All api endpoints and routers are defined here. """
 
+from app.models.thread import Thread
 from fastapi import APIRouter, Body
 
 from app.services.database import DatabaseService
@@ -34,14 +35,15 @@ async def get_thread(thread_id: str):
 
 
 # api to get all threads
-@api_router.get("/threads")
+@api_router.get("/allThread")
 async def get_threads():
     """ Get all threads. """
     # Get all threads from database in threads table
-    threads = []
+    threads : list[Thread] = []
+    threads = db_service.get_all_thread()
 
     # return threads
-    return {"message": "Hello World"} # not implemented yet
+    return threads
 
 # api to create thread with uuid
 @api_router.post("/thread")
