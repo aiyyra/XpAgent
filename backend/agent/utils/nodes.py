@@ -21,22 +21,13 @@ llm_with_tools = llm.bind_tools(tools)
 # Intent classifier |||||||| we will make intent classifier in later staged when query be more complex
 # make class schema for structured output llm to choose its next destination
 
-# Task Listing
-system_prompt_task_lister = """
-Given the query, Identify the main goal to solve the query.
-List out detailed tasks and subtasks (in chronological order) that need to be done to answer the query efficiently.
-
-Example output format:
-Goal: The main goal to solve the query in detailed and actionable manner.
-"""
-
 goal_formation_prompt = """
-Given the query, Identify the main and absolute goal to solve the query. The goal need to be clear, precise and detailed enough to be actionable. 
+Given the query, Identify the main and absolute goal of the query. The goal need to be clear, precise and detailed enough as it will be used to later determine if the user problems is succesfully solved. 
 """
 # may combine goal_formation and task_lister into 1 subgraph
 def goal_formation(state: State):
     
-    prompt = [SystemMessage(content=goal_formation_prompt)] + state["messages"]
+    prompt = [SystemMessage(content=goal_formation_prompt)] + [state["messages"][-1]]
     response = llm.invoke(prompt)
     goal = TasksPlanning(goal=str(response.content), tasks="")
 
@@ -55,8 +46,8 @@ Task 2: Do something
 """
 def task_lister(state: State):
     goal = state["tasks_planning"].goal # type: ignore || check later
-    prompt = [SystemMessage(content=task_lister_prompt.format(goal=goal))] + state["messages"]
-    response = llm.invoke(prompt + state["messages"])
+    prompt = [SystemMessage(content=task_lister_prompt.format(goal=goal))] + [state["messages"][-1]]
+    response = llm.invoke(prompt)
     state["tasks_planning"] = TasksPlanning(goal=goal, tasks=str(response.content))
 
     return {"tasks_planning": state["tasks_planning"]}
