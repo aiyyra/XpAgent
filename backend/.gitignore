@@ -65,6 +65,7 @@ staticfiles/
 uploads/
 media/
 tmp/
+data/
 
 # Docker
 *.pid
