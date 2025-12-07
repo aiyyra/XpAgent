@@ -8,7 +8,7 @@ from langchain_core.messages import BaseMessage, ToolMessage, FunctionMessage
 from langchain_core.runnables import RunnableConfig
 from langchain_core.runnables import chain as as_runnables
 
-from src.output_parser import Task
+from agent.src.output_parser import Task
 
 def _get_observations(messages: List[BaseMessage]) -> Dict[int, Any]:
     # Get all previous tool response

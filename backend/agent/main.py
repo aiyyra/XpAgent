@@ -39,12 +39,13 @@ load_dotenv()
 
 # Result: This structure works
 from agent.src.build_graph import graph_construction
+config = {"configurable": {"thread_id": "m2ex-dev"}}
 
-chain = graph_construction("gpt-4o", 0.2, "agent/data/art.db", "logs/")
+chain = graph_construction("gpt-4o", 0.2, "agent/data/art.db", "logs/", config=config, saver=None, store=None) # type: ignore
 
 question: str = "Find only 2 paintings that start with the letter A, Then find only 1 that starts with the letter T"
 
-config = {"configurable": {"thread_id": "m2ex-dev"}}
+
 messages = [HumanMessage(content=question)]
 messages = chain.invoke({"messages": messages}, config=config) # type: ignore
 for m in messages['messages']:

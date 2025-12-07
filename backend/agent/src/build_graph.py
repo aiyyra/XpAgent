@@ -8,14 +8,16 @@ from langgraph.graph import StateGraph, MessagesState, START, END
 from langchain_core.runnables import RunnableConfig
 from langchain_core.messages import AIMessage, BaseMessage
 from langchain_core.runnables import chain as as_runnables
+from langgraph.store.base import BaseStore
+from langgraph.checkpoint.base import BaseCheckpointSaver
 
 from agent.tools.SQL import get_text2sql_tools
-from src.joiner import JoinOutput, parse_joiner_output, select_recent_messages
-from src.planner import create_planner
-from src.task_fetching_unit import schedule_tasks
+from agent.src.joiner import JoinOutput, parse_joiner_output, select_recent_messages
+from agent.src.planner import create_planner
+from agent.src.task_fetching_unit import schedule_tasks
 
 
-def graph_construction(model, temperature, db_path, log_path, saver=None): #check again for what saver is, if it is store/ checkpointer reimplement later
+def graph_construction(model, temperature, db_path, log_path, config: RunnableConfig, saver: BaseCheckpointSaver, store: BaseStore): #check again for what saver is, if it is store/ checkpointer reimplement later
 
     # Tools
     translate = get_text2sql_tools(ChatOpenAI(model=model, temperature=temperature), db_path)
@@ -82,8 +84,9 @@ def graph_construction(model, temperature, db_path, log_path, saver=None): #chec
     @as_runnables # type: ignore
     def plan_and_schedule(
         state: MessagesState,
-        config: RunnableConfig,
-    ):        
+        config: RunnableConfig = config,
+    ):    
+            
         tasks = planner.stream(state["messages"], config=config) # type: ignore
         # Begin executing the planner task
         try:
@@ -162,8 +165,11 @@ def graph_construction(model, temperature, db_path, log_path, saver=None): #chec
         #     return "plan_and_schedule"
         last_message = messages[-1]
         # Check if the last message is an AIMessage with "Final Response:"
-        if isinstance(last_message, AIMessage):
+        if isinstance(last_message, AIMessage) and "Final Response:" in last_message.content:
             return END
+        
+
+
         return "plan_and_schedule"
 
     # Set up memory
@@ -175,7 +181,10 @@ def graph_construction(model, temperature, db_path, log_path, saver=None): #chec
             #{"plan_and_schedule": "plan_and_schedule", "__end__": "__end__"},
         )
     graph_builder.add_edge(START, "plan_and_schedule")
-    chain = graph_builder.compile()
+    if saver is None and store is None: # for testing
+        chain = graph_builder.compile()
+    else:
+        chain = graph_builder.compile(checkpointer=saver, store=store)
 
     return chain
         

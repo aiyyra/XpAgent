@@ -4,11 +4,11 @@ from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnableBranch
 
 from langgraph.graph import MessagesState
-from langchain_core.messages import SystemMessage, ToolMessage, FunctionMessage
+from langchain_core.messages import SystemMessage, ToolMessage, FunctionMessage, AIMessage
 from langchain_core.prompts import BasePromptTemplate
 from langchain.tools import BaseTool
 
-from src.output_parser import M3LXPlanParser
+from agent.src.output_parser import M3LXPlanParser
 
 def create_planner(
         llm: ChatOpenAI,
@@ -42,7 +42,11 @@ def create_planner(
         if not messages:
             return False
         last_message = messages[-1]
-        return isinstance(last_message, SystemMessage)
+        if isinstance(last_message, AIMessage):
+            # Case for continuation of chat
+            return True
+        else : 
+            return isinstance(last_message, SystemMessage)
     
     def get_last_index(messages: list):
         next_task = 0
