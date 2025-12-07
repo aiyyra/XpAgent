@@ -22,6 +22,7 @@ llm_with_tools = llm.bind_tools(tools)
 # make class schema for structured output llm to choose its next destination
 
 goal_formation_prompt = """
+You are part of an agentic system that has the ability to interact with a SQL database. Make data analysis from it and more.
 Given the query, Identify the main and absolute goal of the query. The goal need to be clear, precise and detailed enough as it will be used to later determine if the user problems is succesfully solved. 
 """
 # may combine goal_formation and task_lister into 1 subgraph
@@ -34,13 +35,17 @@ def goal_formation(state: State):
     return {"tasks_planning": goal}
 
 task_lister_prompt = """
-Given the query and the main goal, list out detailed tasks and subtasks (in chronological order) that need to be done to answer the query efficiently with absolute perfection.
+Given the query and the main goal, list out detailed tasks and subtasks that need to be done to answer the query efficiently with absolute perfection.
+You will have access to a SQL database. You can query the database and fetch the data you need.
 Goal: {goal}
 
 Example Output Format:
+DB related task:-
 Task 1: Do something
-Subtask 1.1: Do something
-Subtask 1.2: Do something
+Task 2: Do something
+
+Non DB related task:-
+Task 1: Do something
 Task 2: Do something
 ...
 """
@@ -48,19 +53,48 @@ def task_lister(state: State):
     goal = state["tasks_planning"].goal # type: ignore || check later
     prompt = [SystemMessage(content=task_lister_prompt.format(goal=goal))] + [state["messages"][-1]]
     response = llm.invoke(prompt)
-    state["tasks_planning"] = TasksPlanning(goal=goal, tasks=str(response.content))
+    state["tasks_planning"] = TasksPlanning(goal=goal, tasks=str(response.content), current_task=0)
 
     return {"tasks_planning": state["tasks_planning"]}
 
-def db_master_call(state: State) -> Literal["db_master", "assistant"]:
-    return "assistant"
+# db_master_prompt = """
+# Given the query and the main goal, list out detailed tasks and subtasks (in chronological order) that need to be done to answer the query efficiently with absolute perfection.
+# Goal: {goal}
 
-system_msg = "You are a smart worker, given the tasks and goals, complete the task efficiently."
+# Example Output Format:
+# Task 1: Do something
+# Subtask 1.1: Do something
+# Subtask 1.2: Do something
+# Task 2: Do something
+# ...
+# """
+# def db_master(state: State):
+#     goal = state["tasks_planning"].goal # type: ignore || check later
+#     prompt = [SystemMessage(content=db_master_prompt.format(goal=goal))] + [state["messages"][-1]]
+#     response = llm_with_tools.invoke(prompt)
+    
+#     return {"messages": [response]}
+
+# def db_master_call(state: State) -> Literal["db_master", "assistant"]:
+#     return "assistant"
+
+# not yet implemented
+assistant_prompt = """
+Main Goal: {goal}
+Tasks: 
+{tasks}
+
+"""
+system_msg = "You are the master of the agentic system. Given the tasks and goals, complete the task efficiently. Whatever happens you should do the task 1 at a time."
 def assistant(
         state: State,
         config: RunnableConfig,
         store: BaseStore
 ):
+    goal = state["tasks_planning"].goal 
+    tasks = state["tasks_planning"].tasks
+
+    prompt = [SystemMessage(content=assistant_prompt.format(goal=goal, tasks=tasks))] + [state["messages"][-1]]
     # query = state["messages"][-1].content
     pass
 

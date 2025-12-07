@@ -13,6 +13,8 @@ from langgraph.prebuilt import ToolNode
 from langchain_community.utilities.sql_database import SQLDatabase
 from app.core.config import settings
 
+from agent.utils.state import State
+
 # database tooling
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 
@@ -37,7 +39,7 @@ run_query_node = ToolNode([run_query_tool], name="run_query")
 
 
 # Example: create a predetermined tool call
-def list_tables(state: MessagesState):
+def list_tables(state: State):
     tool_call = {
         "name": "sql_db_list_tables",
         "args": {},
@@ -54,7 +56,7 @@ def list_tables(state: MessagesState):
 
 
 # Example: force a model to create a tool call
-def call_get_schema(state: MessagesState):
+def call_get_schema(state: State):
     # Note that LangChain enforces that all models accept `tool_choice="any"`
     # as well as `tool_choice=<string name of tool>`.
     llm_with_tools = llm.bind_tools([get_schema_tool], tool_choice="any")
@@ -81,7 +83,7 @@ DO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the databa
 )
 
 
-def generate_query(state: MessagesState):
+def generate_query(state: State):
     system_message = {
         "role": "system",
         "content": generate_query_system_prompt,
@@ -113,7 +115,7 @@ You will call the appropriate tool to execute the query after running this check
 """.format(dialect=db.dialect)
 
 
-def check_query(state: MessagesState):
+def check_query(state: State):
     system_message = {
         "role": "system",
         "content": check_query_system_prompt,
@@ -128,7 +130,7 @@ def check_query(state: MessagesState):
 
     return {"messages": [response]}
 
-def should_continue(state: MessagesState) -> Literal[END, "check_query"]:
+def should_continue(state: State) -> Literal[END, "check_query"]:
     messages = state["messages"]
     last_message = messages[-1]
     if not last_message.tool_calls:

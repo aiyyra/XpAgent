@@ -2,6 +2,7 @@ from typing import Dict, List, Sequence, Union
 from langgraph.graph import MessagesState
 from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, SystemMessage
 from pydantic import BaseModel, Field
+from langchain_core.runnables import RunnableConfig
 
 
 class FinalResponse(BaseModel):
@@ -22,12 +23,12 @@ class JoinOutput(BaseModel):
     )
     action: Union[FinalResponse, Replan]
 
-def parse_joiner_output(decision: JoinOutput) -> List[BaseMessage]:
+def parse_joiner_output(decision: JoinOutput):
     response = [AIMessage(content=f"Thought: {decision.thought}")]
     if isinstance(decision.action, Replan):
-        return response + [
+        return { "messages": response + [
             SystemMessage(content=f"Content from last attempt: {decision.action.feedback}")
-        ] # type: ignore
+        ]}
     else:
         # return response + [AIMessage(content=f"Final Response: {decision.action.response}")] 
         return { "messages": response + [AIMessage(content=f"Final Response: {decision.action.response}")] } # type: ignore
@@ -36,8 +37,11 @@ def parse_joiner_output(decision: JoinOutput) -> List[BaseMessage]:
 def select_recent_messages(state: MessagesState) -> dict:
     messages = state["messages"]
     selected = []
+    is_new_query = False
+    if isinstance(messages[::-1][0], HumanMessage):
+        is_new_query = True
     for msg in messages[::-1]: 
         selected.append(msg)
-        if isinstance(msg, HumanMessage):
+        if isinstance(msg, HumanMessage) and not is_new_query:
             break
     return {"messages": selected[::-1]}
