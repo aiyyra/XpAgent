@@ -6,6 +6,7 @@ from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
 from langchain_core.runnables import RunnableConfig
 from langchain_core.tools import StructuredTool
 from langchain_openai import ChatOpenAI
+from pydantic import BaseModel, Field
 from PIL import Image
 import base64
 from pathlib import Path
@@ -17,45 +18,30 @@ from langchain_core.messages import (
     SystemMessage,
 )
 from langchain_experimental.tools import PythonAstREPLTool
-from pydantic import BaseModel, Field
 
 
 
 _DESCRIPTION = (
-    " data_plotting (question:str, context: Union[str, List[str],dict])-> str\n"
-    " This tools is a data plotting task. For given data and a question, it analysis the data and plot a proper chart to answer a user query. \n"
-    " - Minimize the number of `data_plotting` actions as much as possible."
+    " data_preparation (question:str, context: Union[str, List[str],dict])-> str\n"
+    " This tools is a data preparation task. For given data and question, it porcess the data and prepare the proper data structure for a request. \n"
+    " - Minimize the number of `data_preparation` actions as much as possible."
     " if you want this tools does its job properly, you should include all required information from the user query in previous tasks."
+  
     
     # Context specific rules below"
 )
 
 # " Plotting or any other visualization request should be done after each analysis.\n"
-_SYSTEM_PROMPT = """You are a data plotting assistant. Plot the the provided data from the previous steps to answer the question.
-- Analyze the user's request and input data to determine the most suitable type of visualization/plot that also can be understood by the simple user.
+_SYSTEM_PROMPT = """You are a data preparation and processing assistant. Create a proper structure for the provided data from the previous steps to answer the request.
 - If the required information has not found in the provided data, ask for replaning and ask from previous tools to include the missing information.
+- You should include all the input data in the code, and prevent of ignoring them by  `# ... (rest of the data)`.
+- You should provide a name or caption for each value in the final output considering the question and the input context."
 - Dont create any sample data in order to answer to the user question.
-- You should save the generated plot at the specified path with the proper filename and .png extension.
-- You will only save the .png in background. consider not using `TK` object as it will not close properly in async for GUI. Refer this script:
-```python
-import matplotlib
-matplotlib.use("Agg")   # <- do this before pyplot import
-import matplotlib.pyplot as plt
-
-# make and save figure...
-plt.figure()
-# ...
-plt.savefig("out.png")
-plt.close()
-
-```
+- You should print the final data structure.
+- You should save the final data structure at the specified path with a proper filename.
+- You should output the final data structure as a final output.
 """
 
-_ADDITIONAL_CONTEXT_PROMPT = """The following additional context is provided from other functions.\
-    Use it to substitute into any ${{#}} variables or other words in the problem.\
-    \n\n${context}\n\nNote that context variables are not defined in code yet.\
-You must extract the relevant data and directly put them in code.
-"""
 
   
 class ExecuteCode(BaseModel):
@@ -68,6 +54,11 @@ class ExecuteCode(BaseModel):
     code: str = Field(
         ...,
         description="The simple code expression to execute by python_executor.",
+    )
+    
+    data: str = Field(
+        ...,
+        description="The final data structure as a final output.",
     )
 
 def extract_code_from_block(response):
@@ -97,21 +88,20 @@ class PythonREPL:
         try:
             result = self.python_tool.run(code)
         except Exception as e:
-            print(f"Failed to execute. Error: {repr(e)}")
             return f"Failed to execute. Error: {repr(e)}"
-        return f"Plot created successfully!:\n```python\n{code}\n```\nStdout: {result}"
+        return result
         
 python_repl = PythonREPL() 
       
 
-def get_plotting_tools(llm: ChatOpenAI, log_path):
+def get_data_preparation_tools(llm: ChatOpenAI, log_path):
     """
    
     Args:
         question (str): The question.
         context list(str)
     Returns:
-        python code: the python code that is needed in the plot genration task.
+        dataframe: the dataframe that is needed for a plot genration task.
     """
     prompt = ChatPromptTemplate.from_messages(
         [
@@ -121,21 +111,15 @@ def get_plotting_tools(llm: ChatOpenAI, log_path):
             
         ]
     )
-    
     # extractor = create_structured_output_runnable(ExecuteCode, llm, prompt)
     extractor = prompt | llm.with_structured_output(ExecuteCode)
 
 
-    def data_plotting(
+    def data_preparation(
         question: str,
         context: Union[str, List[str],dict] = None,
         config: Optional[RunnableConfig] = None,
     ):
-       
-        #test
-        
-        #context="[{'study_id': 56222792, 'image_id': '3c7d71b0-383da7fc-80f78f8c-6be2da46-3614e059'}]"
-       # data= [{'week': '48', 'male_patient_count': 6}, {'week': '49', 'male_patient_count': 2}, {'week': '50', 'male_patient_count': 2}, {'week': '51', 'male_patient_count': 1}, {'week': '52', 'male_patient_count': 7}]
        
         print("context-first:", context,type(context))
         context_str= str(context).strip()
@@ -144,7 +128,7 @@ def get_plotting_tools(llm: ChatOpenAI, log_path):
         # )
         # if 'data' in context:
         #     context=context['data']
-        context_str += f"Save the generated plot to the following directory: {log_path}"
+        context_str += f"Save the generated data to the following directory: {log_path} and output the final data structure in data filed"
         chain_input = {"question": question,"context":context_str}
         # chain_input["context"] = [SystemMessage(content=context)]
                        
@@ -158,15 +142,17 @@ def get_plotting_tools(llm: ChatOpenAI, log_path):
             chain_input["info"] =[HumanMessage(content= _error_handiling_prompt)]
             code_model = extractor.invoke(chain_input) # type: ignore
             try:
-                return python_repl.run(code_model.code)
+                return code_model.data
             except Exception as e:
                 return repr(e)
         else:
-            return code_model.code
+            # extract data from the code
+           
+            return code_model.data
 
     return StructuredTool.from_function(
-        name = "data_plotting",
-        func = data_plotting,
+        name = "data_preparation",
+        func = data_preparation,
         description=_DESCRIPTION,
     )
 

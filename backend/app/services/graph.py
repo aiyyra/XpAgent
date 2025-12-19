@@ -48,7 +48,7 @@ class GraphService:
 
     #     return m_builder.compile(checkpointer=checkpointer, store=store)
     def main_builder(self, config: RunnableConfig, checkpointer: PostgresSaver, store: PostgresStore):
-        chain = graph_construction("gpt-4o", 0.2, "agent/data/art.db", "logs/", config=config, saver=checkpointer, store=store)
+        chain = graph_construction("gpt-4o", 0.2, db_path="/home/afiq/fyp/main-XpAgent/backend/agent/data/art.db", log_path="/home/afiq/fyp/main-XpAgent/backend/agent/logs/", config=config, saver=checkpointer, store=store)
 
         return chain    # could skip and maybe pass as class variable later, but this works with codebase for now | tidy up later
 
@@ -72,7 +72,7 @@ class GraphService:
             graph = self.main_builder(config=config, checkpointer=checkpointer, store=store)
             
             # Invoking the graph here
-            reply = graph.invoke(
+            reply = graph.ainvoke(
                 {"messages": [HumanMessage(content=query)]}, # type: ignore
                 config=config # type: ignore
             )
@@ -81,6 +81,7 @@ class GraphService:
 
             # return past_messages
 
+            # reply that returns need to reflect the state in langgraph at realtime.
             return reply
         
     async def get_past_messages(self, thread_id: str):

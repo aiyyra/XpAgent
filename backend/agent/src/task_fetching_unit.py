@@ -27,7 +27,7 @@ class SchedulerInput(TypedDict):
 def _execute_task(
     task: Task,
     observations: Dict[int, Any], 
-    config: RunnableConfig,
+    # config: RunnableConfig,
 ) -> Any:
     tool_to_use = task["tool"]
     if isinstance(tool_to_use, str):
@@ -49,7 +49,8 @@ def _execute_task(
             f"Args could not be resolved. Error {repr(e)}.",
         )
     try:
-        return tool_to_use.invoke(resolved_args, config) # type: ignore # check the type later
+        # return tool_to_use.invoke(resolved_args, config) # type: ignore # check the type later
+        return tool_to_use.invoke(resolved_args) # type: ignore
     except Exception as e:
         return (
             f"Error(failed to call {tool_to_use.name} with args {args}.",
@@ -87,7 +88,8 @@ def schedule_task(
     task: Task = task_input["tasks"]
     observations : Dict[int, Any] = task_input["observations"]
     try:
-        observation = _execute_task(task, observations, config)
+        # observation = _execute_task(task, observations, config)
+        observation = _execute_task(task, observations)
     except Exception:
         import traceback
 
