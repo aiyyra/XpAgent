@@ -15,14 +15,22 @@ from agent.tools.SQL import get_text2sql_tools
 from agent.src.joiner import JoinOutput, parse_joiner_output, select_recent_messages
 from agent.src.planner import create_planner
 from agent.src.task_fetching_unit import schedule_tasks
+from agent.tools.data import get_data_preparation_tools
+from agent.tools.plot import get_plotting_tools
+from tools.backend.image_qa import VisualQA
+from tools.visual_qa import get_image_analysis_tools
 
 
 def graph_construction(model, temperature, db_path, log_path, config: RunnableConfig, saver: BaseCheckpointSaver, store: BaseStore): #check again for what saver is, if it is store/ checkpointer reimplement later
 
     # Tools
+    vqa_model = VisualQA() 
+    image_analysis = get_image_analysis_tools(vqa_model)
     translate = get_text2sql_tools(ChatOpenAI(model=model, temperature=temperature), db_path)
-    
-    tools = [translate] # add other tools here later
+    data_preparation = get_data_preparation_tools(ChatOpenAI(model=model, temperature=temperature), log_path)
+    data_plotting = get_plotting_tools(ChatOpenAI(model=model, temperature=temperature), log_path)
+
+    tools = [translate, data_preparation, data_plotting, image_analysis] # add other tools here later
     llm = ChatOpenAI(model=model, temperature=temperature)
 
     # In sub_question related to text2SQL include all requested information to be retrieved at once.

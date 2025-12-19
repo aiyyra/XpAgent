@@ -41,9 +41,10 @@ load_dotenv()
 from agent.src.build_graph import graph_construction
 config = {"configurable": {"thread_id": "m2ex-dev"}}
 
-chain = graph_construction("gpt-4o", 0.2, "agent/data/art.db", "logs/", config=config, saver=None, store=None) # type: ignore
+chain = graph_construction("gpt-4o", 0.2, "agent/art.db", log_path="/home/afiq/fyp/main-XpAgent/backend/agent/logs/", config=config, saver=None, store=None) # type: ignore
 
-question: str = "Find only 2 paintings that start with the letter A, Then find only 1 that starts with the letter T"
+question: str = "What is the movement of the painting that depicts the highest number of swords?"
+# question: str = "use the plotting tools to run a code in repl that print the cwd and hello world"
 
 
 messages = [HumanMessage(content=question)]
