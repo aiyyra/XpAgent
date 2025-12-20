@@ -99,9 +99,9 @@ def get_image_analysis_tools(vqa):
             context=[context]
         try:
             vqa_answers=[]
-            image_paths=[f"{IMAGE_PATH}/{ctx['img_path']}" for ctx in context]
+            image_paths=[f"{IMAGE_PATH}/{ctx['img_path']}.jpg" for ctx in context]
             
-            # print(image_paths)
+            print(image_paths)
             
             answers= vqa.extract(image_paths, question)
             

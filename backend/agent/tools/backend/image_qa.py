@@ -17,7 +17,7 @@ class VisualQA():
             with ExitStack() as stack:
                 images = [stack.enter_context(Image.open(image_path)) for image_path in image_paths[i:i+batch_size]]
                 inputs = self.processor(images, text=query, return_tensors="pt", padding=True)
-                outputs = self.model.generate(**inputs, maxlength=20)
+                outputs = self.model.generate(**inputs, max_length=20)
 
                 results.extend([self.processor.decode(o, skip_special_tokens=True) for o in outputs])
         return results
